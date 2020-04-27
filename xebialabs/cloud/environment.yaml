@@ -1,0 +1,25 @@
+---
+apiVersion: xl-deploy/v1
+kind: Environments
+spec:
+  - directory: Environments/petportal
+    children:
+      - name: petportal.dev
+        type: udm.Environment
+        members:
+          - Infrastructure/terraform-cloud/aws
+        dictionaries:
+          - Environments/petportal/config.dev
+      - name: config.dev
+        type: udm.Dictionary
+        entries:
+          aws_region: eu-west-3
+          env: dev
+          instance_type: t2.micro
+          database_name: petportal_{{env}}_db
+          database_username: petclinic{{env}}
+          TITLE: Welcome {{env}}
+        encryptedEntries:
+          database_password: scott00tiger
+          database_root_password: scottRoot2020CoronaVirus
+

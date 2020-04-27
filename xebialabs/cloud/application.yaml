@@ -1,0 +1,63 @@
+---
+apiVersion: xl-deploy/v1
+kind: Applications
+spec:
+- name: Applications/cloud-infrastructure
+  type: udm.Application
+  lastVersion: 2.0.1
+  children:
+  - name: 2.0.1
+    type: udm.DeploymentPackage
+    deployables:
+      - name: stack
+        type: terraform.ConfigurationSpec
+        workspaceName: petportal-stack-{{env}}
+        generateCIsFromResources: False
+        boundTemplates:
+          - ../template-host-bdd
+          - ../template-host-front
+        embeddedModules:
+          - name: keypairs
+            type: terraform.EmbeddedModuleArtifact
+            file: !file "artifacts/keypairs"
+        mapperContext:
+          privateKeyFile: /Users/bmoussaud/.ssh/demo_keypairs/id_rsa
+        modules:
+          - name: java-bdd-project
+            type: terraform.InstantiatedModuleSpec
+            source: jclopeza/java-bdd-project/module
+            version: 4.0.0
+            inputVariables:
+              aws_region: '{{aws_region}}'
+              instance_type: '{{instance_type}}'
+              public_key_path: keypairs/id_rsa.pub
+              environment: '{{env}}'
+              private_key_path: /dev/null
+              project_name: petportal
+            outputVariables:
+              environment: environment
+              public_ip_front: public_ip_front
+              public_ip_bdd: public_ip_bdd
+              private_key_path: private_key_path
+    templates:
+      - name: template-host-bdd
+        type: template.overthere.SshHost
+        instanceName: !format 'petportal-{{env}}-bdd'
+        os: UNIX
+        connectionType: SCP
+        address: '{{%outputVariables.public_ip_bdd%}}'
+        username: ubuntu
+        tags:
+          - backend
+        privateKeyFile: /Users/bmoussaud/.ssh/demo_keypairs/id_rsa
+      - name: template-host-front
+        type: template.overthere.SshHost
+        instanceName: !format 'petportal-{{env}}-front'
+        os: UNIX
+        connectionType: SCP
+        address: '{{%outputVariables.public_ip_front%}}'
+        username: ubuntu
+        tags:
+          - frontend
+        privateKeyFile: /Users/bmoussaud/.ssh/demo_keypairs/id_rsa
+

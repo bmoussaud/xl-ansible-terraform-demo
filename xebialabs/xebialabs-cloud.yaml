@@ -1,0 +1,9 @@
+apiVersion: xl/v1
+kind: Import
+metadata:
+ imports:
+   - cloud/infrastructure.yaml
+   - cloud/application.yaml
+   - provision/infrastructure.yaml
+   - provision/application.yaml
+   - cloud/environment.yaml

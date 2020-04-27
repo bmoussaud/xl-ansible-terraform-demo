@@ -1,0 +1,36 @@
+---
+apiVersion: xl-deploy/v1
+kind: Applications
+spec:
+- name: Applications/PetPortal
+  type: udm.Application
+  lastVersion: 2.0.88
+  children:
+  - name: 2.0.88
+    type: udm.DeploymentPackage
+    orchestrator:
+    - sequential-by-deployment-group
+    deployables:
+    - name: smoke Test
+      type: smoketest.HttpRequestTest
+      url: 'http://{{public_ip_front}}:8080/petclinic/index.jsp'
+      expectedResponseText: '{{TITLE}}'
+    - name: sql
+      type: sql.SqlScripts
+      file: !file "artifacts/Applications/PetPortal/2.0.88/sql"
+    - name: petDataSource
+      type: tomcat.DataSourceSpec
+      jndiName: jdbc/petds
+      context: petclinic
+      username: '{{database_username}}'
+      password: '{{database_password}}'
+      driverClassName: com.mysql.jdbc.Driver
+      url: 'jdbc:mysql://{{public_ip_bdd}}/{{database_name}}'
+    - name: petclinic
+      type: jee.War
+      scanPlaceholders: True
+      file: !file "artifacts/Applications/PetPortal/2.0.88/petclinic/PetClinic.war"
+    - name: petclinic-backend
+      type: jee.War
+      preScannedPlaceholders: true
+      file: !file "artifacts/Applications/PetPortal/2.0.88/petclinic-backend/PetClinic-Backend.war"
