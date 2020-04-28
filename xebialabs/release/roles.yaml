@@ -1,0 +1,50 @@
+apiVersion: xl-release/v1
+kind: Permissions
+spec:
+- directory: Terraform
+  teams:
+  - name: Requester
+    users:
+    - admin
+  - name: Executor
+    users:
+    - admin
+  - name: Folder Owner
+    users:
+    - admin
+    permissions:
+    - folder#edit_variables
+    - group#edit
+    - folder#edit_configuration
+    - folder#view
+    - dashboard#edit
+    - folder#edit_security
+    - folder#edit
+    - dashboard#view
+    - group#view
+  - name: Release Admin
+    users:
+    - admin
+    permissions:
+    - release#edit_precondition
+    - release#edit
+    - release#lock_task
+    - release#start
+    - release#reassign_task
+    - release#edit_blackout
+    - release#edit_failure_handler
+    - folder#view
+    - release#abort
+    - release#view
+    - release#edit_task
+  - name: Template Owner
+    users:
+    - admin
+    permissions:
+    - template#edit
+    - template#lock_task
+    - template#view
+    - folder#view
+    - template#edit_precondition
+    - template#create_release
+    - template#edit_failure_handler

@@ -2,7 +2,7 @@
 apiVersion: xl-deploy/v1
 kind: Environments
 spec:
-  - directory: Environments/petportal
+  - directory: Environments/petportal2
     children:
       - name: petportal.dev
         type: udm.Environment

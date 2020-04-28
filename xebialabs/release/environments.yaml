@@ -1,0 +1,30 @@
+---
+apiVersion: xl-release/v1
+kind: Environments
+spec:
+  stages:
+  - Development
+  - Acceptance
+  - Production
+  - Test
+  labels:
+  - name: aws
+    color: '#0079BC'
+  - name: cloud
+    color: '#0079BC'
+  environments:
+  - name: petportal.dev
+    stage: Development
+    labels:
+    - cloud
+    - aws
+  - name: petportal.prod
+    stage: Production
+    labels:
+    - cloud
+    - aws
+  - name: petportal.test
+    stage: Test
+    labels:
+    - cloud
+    - aws

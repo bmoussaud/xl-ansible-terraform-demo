@@ -1,0 +1,19 @@
+---
+apiVersion: xl-release/v1
+kind: Applications
+spec:
+- name: Ansible
+  environments:
+  - petportal.prod
+  - petportal.dev
+  - petportal.test
+- name: Terraform
+  environments:
+  - petportal.prod
+  - petportal.dev
+  - petportal.test
+- name: PetPortal
+  environments:
+  - petportal.prod
+  - petportal.dev
+  - petportal.test

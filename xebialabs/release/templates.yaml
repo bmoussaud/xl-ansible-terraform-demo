@@ -1,0 +1,196 @@
+---
+apiVersion: xl-release/v1
+kind: Templates
+spec:
+- directory: Cloud Infrastructure
+  children:
+  - template: Provisioning a new Cloud Infrastructure AWS
+    description: '# Template Provisioning a new Cloud Infrastructure  in AWS'
+    scheduledStartDate: 2019-08-08T09:00:00+02:00
+    dueDate: 2020-04-28T12:01:06.672+02:00
+    phases:
+    - phase: DATA COLLECTION
+      tasks:
+      - name: Configuration of the new cloud infrastructure
+        type: xlrelease.UserInputTask
+        description: "## Data for the creation of the infrastructure\nYou must provide\
+          \ a series of data to be able to provision the infrastructure on AWS. \n\
+          \n* It will be necessary to provide the following information"
+        team: Requester
+        variables:
+        - aws_region
+        - environment
+        - instance_type
+        - project_name
+      - name: Verification of the existence of infrastructure project for ${project_name}
+        type: xld.DoesCIExist
+        server: XL Deploy
+        ciID: Applications/cloud-infrastructure-${project_name}
+        throwOnFail: true
+        description: |-
+          ## Verification of existence of infrastructure project for ${project_name}
+
+          It will be the project with the Terraform templates that will be in charge of provisioning the infrastructure.
+        team: Executor
+      - name: Obtaining the versions available for ${project_name}
+        type: xld.GetAllVersions
+        server: XL Deploy
+        applicationId: Applications/cloud-infrastructure-${project_name}
+        description: |-
+          ## Obtención de las versiones disponibles para ${project_name}
+
+          Obtendremos un listado con las **distintas versiones de infraestructura disponibles** para el proyecto ${project_name}
+        team: Executor
+        variableMapping:
+          pythonScript.packageIds: ${versions_infrastructure_availables}
+      - name: Infrastructure version selection
+        type: xlrelease.UserInputTask
+        description: "330/5000\n## Selection of infrastructure version\nYou need to\
+          \ provide the version of the infrastructure you want to apply. Once selected,\
+          \ there will be:\n\n* Resources created in the region :$ {aws_region} \n\
+          * Instances of type  $ {instance_type} \n* Type environment : $ {environment}\
+          \ \n* For the project  $ {project_name}"
+        team: Requester
+        variables:
+        - version_infrastructure_selected
+      color: '#0099CC'
+    variables:
+    - type: xlrelease.StringVariable
+      key: aws_region
+      requiresValue: false
+      showOnReleaseStart: false
+      label: AWS Region
+      description: Región de AWS en la que se crearán los recursos y la infraestructura
+      valueProvider:
+        type: xlrelease.ListOfStringValueProviderConfiguration
+        values:
+        - us-east-1
+        - us-east-2
+        - us-west-1
+        - us-west-2
+        - eu-west-1
+        - eu-west-2
+        - eu-west-3
+      value: us-east-1
+    - type: xlrelease.StringVariable
+      key: environment
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Environment
+      description: Environment object of the infrastructure request
+      valueProvider:
+        type: xlrelease.ListOfStringValueProviderConfiguration
+        values:
+        - dev
+        - test
+        - prod
+      value: dev
+    - type: xlrelease.StringVariable
+      key: instance_type
+      requiresValue: false
+      showOnReleaseStart: false
+      label: EC2 Instance Type
+      description: Type of the EC2 instances to be created. For productive environments,
+        higher capacity instances are recommended.
+      valueProvider:
+        type: xlrelease.ListOfStringValueProviderConfiguration
+        values:
+        - t2.nano
+        - t2.micro
+        - t2.small
+        - t2.medium
+        - t2.large
+        - t2.xlarge
+        - t2.2xlarge
+      value: t2.micro
+    - type: xlrelease.StringVariable
+      key: project_name
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Project Name
+      description: Name of the project to create. An application of the same name
+        must exist in XL Deploy under Applications / Infrastructures / Terraform
+      value: petportal
+    - type: xlrelease.ListStringVariable
+      key: versions_infrastructure_availables
+      requiresValue: false
+      showOnReleaseStart: false
+      label: available Infrastructure versions
+      description: available Infrastructure versions
+    - type: xlrelease.StringVariable
+      key: version_infrastructure_selected
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Selected infrastructure version
+      valueProvider:
+        type: xlrelease.ListOfStringValueProviderConfiguration
+        variableMapping:
+          values: ${versions_infrastructure_availables}
+    - type: xlrelease.StringVariable
+      key: version_provisioning
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Versión de los playbooks de Ansible para provisionar la infraestructura
+      valueProvider:
+        type: xlrelease.ListOfStringValueProviderConfiguration
+        values:
+        - 3.0.0
+        - 2.0.0
+        - 1.0.0
+      value: 3.0.0
+    - type: xlrelease.StringVariable
+      key: ip_front
+      requiresValue: false
+      showOnReleaseStart: false
+      label: IP de la máquina de front
+      description: IP obtenida de forma dinámica de las instancias EC2 creadas
+    - type: xlrelease.StringVariable
+      key: ip_bdd
+      requiresValue: false
+      showOnReleaseStart: false
+      label: IP de la máquina de bdd
+      description: IP obtenida de forma dinámica de las instancias EC2 creadas
+    - type: xlrelease.ListStringVariable
+      key: list_tags
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: tag_ansible_selected
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Versiones de playbooks disponibles
+      valueProvider:
+        type: xlrelease.ListOfStringValueProviderConfiguration
+        variableMapping:
+          values: ${list_tags}
+    - type: xlrelease.StringVariable
+      key: user_tomcat
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Usuario administrador de Tomcat
+      value: admin
+    - type: xlrelease.PasswordStringVariable
+      key: password_tomcat
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Password para el administrador de Tomcat
+    scriptUsername: admin
+    scriptUserPassword: admin
+    extensions:
+    - name: Dashboard
+      type: xlrelease.Dashboard
+      owner: admin
+      tiles:
+      - name: Release progress
+        type: xlrelease.ReleaseProgressTile
+      - name: Release summary
+        type: xlrelease.ReleaseSummaryTile
+      - name: Resource usage
+        type: xlrelease.ResourceUsageTile
+      - name: Release timeline
+        type: xlrelease.TimelineTile
+      - name: Release health
+        type: xlrelease.ReleaseHealthTile
+      parentTemplate: Applications/Folderee13f324af694ecea353898fec0faee6/Releasea5a1a69797964262a57f729d8e414104
+    riskProfile: Default risk profile
+

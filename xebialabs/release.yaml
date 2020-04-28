@@ -1,0 +1,9 @@
+apiVersion: xl/v1
+kind: Import
+metadata:
+ imports:
+   - release/environments.yaml
+   - release/applications.yaml
+   - release/configuration.yaml
+   - release/roles.yaml
+   - release/templates.yaml

@@ -2,7 +2,7 @@
 apiVersion: xl-deploy/v1
 kind: Applications
 spec:
-- name: Applications/provision-infrastructure
+- name: Applications/provision-infrastructure-petportal
   type: udm.Application
   lastVersion: 0.0.13
   children:
