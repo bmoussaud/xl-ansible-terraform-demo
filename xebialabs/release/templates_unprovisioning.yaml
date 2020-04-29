@@ -1,0 +1,43 @@
+---
+apiVersion: xl-release/v1
+kind: Templates
+spec:
+- directory: Cloud Infrastructure
+  children:
+  - template: Unprovisioning an AWS Cloud Infrastructure
+    scheduledStartDate: 2020-04-29T09:00:00+02:00
+    phases:
+    - phase: Cleanup
+      tasks:
+      - name: Undeploy APP ${project_name}
+        type: xldeploy.Undeploy
+        server: XL Deploy
+        deployedApplication: Environments/${project_name}/${project_name}.${environment}/app-/${project_name}
+        team: Executor
+      - name: Undeploy Provisioning ${project_name}
+        type: xldeploy.Undeploy
+        server: XL Deploy
+        deployedApplication: Environments/${project_name}/${project_name}.${environment}/provision-infrastructure-${project_name}
+        team: Executor
+      - name: Undeploy Cloud Infra ${project_name}
+        type: xldeploy.Undeploy
+        server: XL Deploy
+        deployedApplication: Environments/${project_name}/${project_name}.${environment}/cloud-infrastructure-${project_name}
+        team: Executor
+    variables:
+    - type: xlrelease.StringVariable
+      key: project_name
+      label: Project Name
+      value: petportal
+    - type: xlrelease.StringVariable
+      key: environment
+      valueProvider:
+        type: xlrelease.ListOfStringValueProviderConfiguration
+        values:
+        - dev
+        - test
+        - prod
+      value: test
+    scriptUsername: admin
+    scriptUserPassword: !value "xlrelease_Release_Unprovisioning_an_AWS_Cloud_Infrastructure_scriptUserPassword"
+    riskProfile: Default risk profile
