@@ -33,6 +33,7 @@ spec:
       tags:
         - backend
       roles:
+        - pre
         - geerlingguy.mysql
         - devopsascode
       galaxyRoles:

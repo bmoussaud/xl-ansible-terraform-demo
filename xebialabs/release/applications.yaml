@@ -2,17 +2,17 @@
 apiVersion: xl-release/v1
 kind: Applications
 spec:
-- name: Ansible
+- name: app-petportal
   environments:
   - petportal.prod
   - petportal.dev
   - petportal.test
-- name: Terraform
+- name: provision-infrastructure-petportal
   environments:
   - petportal.prod
   - petportal.dev
   - petportal.test
-- name: PetPortal
+- name: cloud-infrastructure-petportal
   environments:
   - petportal.prod
   - petportal.dev

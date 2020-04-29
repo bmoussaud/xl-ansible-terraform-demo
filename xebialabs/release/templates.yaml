@@ -22,7 +22,7 @@ spec:
         - environment
         - instance_type
         - project_name
-      - name: Verification of the existence of infrastructure project for ${project_name}
+      - name: Check of the existence of infrastructure project for ${project_name}
         type: xld.DoesCIExist
         server: XL Deploy
         ciID: Applications/cloud-infrastructure-${project_name}
@@ -32,28 +32,155 @@ spec:
 
           It will be the project with the Terraform templates that will be in charge of provisioning the infrastructure.
         team: Executor
-      - name: Obtaining the versions available for ${project_name}
+      - name: Obtaining the versions available for the infrastructure creation of
+          the ${project_name} project
         type: xld.GetAllVersions
         server: XL Deploy
         applicationId: Applications/cloud-infrastructure-${project_name}
+        description: '## Obtaining the versions available for the infrastructure creation
+          of the ${project_name} project'
+        team: Executor
+        variableMapping:
+          pythonScript.packageIds: ${versions_infrastructure_availables}
+      - name: Selection of infrastructure version
+        type: xlrelease.UserInputTask
+        description: "330/5000\n## Selection of infrastructure version\nYou need to\
+          \ provide the version of the infrastructure you want to apply. Once selected,\
+          \ there will be:\n\n* Resources created in the region : ${aws_region} \n\
+          * Instances of type  ${instance_type} \n* Type environment : ${environment}\
+          \ \n* For the project  ${project_name}"
+        team: Requester
+        variables:
+        - version_infrastructure_selected
+      color: '#0099CC'
+    - phase: ENVIRONMENT CREATION
+      tasks:
+      - name: Creation of the configuration item in XLD
+        type: devopsascode.Apply
+        server: XL Deploy
+        content: |-
+          ---
+          apiVersion: xl-deploy/v1
+          kind: Infrastructure
+          spec:
+          - name: !format "Infrastructure/terraform-cloud/%project_name%.%environment%"
+            type: terraformEnterprise.AwsProvider
+            accessSecret: !value "aws_secret_access_key"
+            accessKey: !value "aws_access_key_id"
+            defaultRegion: !value aws_region
+          ---
+          apiVersion: xl-deploy/v1
+          kind: Environments
+          spec:
+            - directory: !format Environments/%project_name%
+              children:
+                - name: !format "%project_name%.%environment%"
+                  type: udm.Environment
+                  members:
+                    - !format "Infrastructure/terraform-cloud/%project_name%.%environment%"
+                  dictionaries:
+                    - !format "Environments/%project_name%/config.%environment%"
+                - name: !format "config.%environment%"
+                  type: udm.Dictionary
+                  entries:
+                    aws_region: !value aws_region
+                    env: !value environment
+                    instance_type: !value instance_type
+                    database_name: petportal_{{env}}_db
+                    database_username: petclinic{{env}}
+                    TITLE: Welcome {{env}}
+                  encryptedEntries:
+                    database_password: scott00tiger
+                    database_root_password: scottRoot2020CoronaVirus
+        values:
+          instance_type: ${instance_type}
+          project_name: ${project_name}
+          aws_region: ${aws_region}
+          environment: ${environment}
+        description: Define the new CI in XLDeploy
+        team: Executor
+      - name: Validation of the environment in XLD
+        type: xlrelease.Task
+        description: "### Necessary resources ready for infrastructure deployment\n\
+          The following information has been provided for the creation of new infrastructure:\n\
+          \n1. _Environment_ ${environment}\n2. _Project:_ ${project_name}\n3. _AWS\
+          \ Region:_  ${aws_region}\n4. _Type of instances:_ ${instance_type}\n\n\
+          ### deployment environment\nThe environment necessary to deploy has been\
+          \ created in XL Deploy.\n\n#### Name of the deployment environment:\n* Infrastructure/terraform-cloud/${project_name}.${environment}\n\
+          * Environments/${project_name}/${project_name}.${environment}\n* Environments/${project_name}/config.${environment}\n\
+          * Environments/${project_name} \n\n### Validate that the resources have\
+          \ been created correctly in XLD"
+        team: Requester
+      - name: Validation of application and approval of the security team
+        type: xlrelease.GateTask
+        description: "### Necessary resources ready for infrastructure deployment\n\
+          The following information has been provided for the creation of new infrastructure:\n\
+          \n1. _Environment_ ${environment}\n2. _Project:_ ${project_name}\n3. _AWS\
+          \ Region:_  ${aws_region}\n4. _Type of instances:_ ${instance_type}\n\n\
+          ### deployment environment\nThe environment necessary to deploy has been\
+          \ created in XL Deploy.\n\n#### Name of the deployment environment:\n* Infrastructure/terraform-cloud/${project_name}.${environment}\n\
+          * CI Environments/${project_name}/${project_name}.${environment}\n* Environments/${project_name}/config.${environment}\n\
+          * Environments/${project_name} \n\n### Validate that the resources have\
+          \ been created correctly in XLD"
+        team: Security Team
+        precondition: '"${environment}" == "prod"'
+      color: '#00875A'
+    - phase: INFRASTRUCTURE CREATION
+      tasks:
+      - name: Creation of the infrastructure in AWS
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentPackage: ${version_infrastructure_selected}
+        deploymentEnvironment: Environments/${project_name}/${project_name}.${environment}
+        team: Executor
+      - name: Lookup of the IP addresses
+        type: xlrelease.ParallelGroup
+        tasks:
+        - name: IP front ${ip_front}
+          type: xld.GetCIStringProperty
+          server: XL Deploy
+          ciID: Infrastructure/${project_name}-${environment}-front
+          ciPropertyName: address
+          variableMapping:
+            pythonScript.ciPropertyValue: ${ip_front}
+        - name: IP Database ${ip_bdd}
+          type: xld.GetCIStringProperty
+          server: XL Deploy
+          ciID: Infrastructure/${project_name}-${environment}-bdd
+          ciPropertyName: address
+          variableMapping:
+            pythonScript.ciPropertyValue: ${ip_bdd}
+      color: '#CC4A3C'
+    - phase: INFRASTRUCTURE PROVISIONING
+      tasks:
+      - name: Obtaining the versions available for the provisioning of the ${project_name}
+          project
+        type: xld.GetAllVersions
+        server: XL Deploy
+        applicationId: Applications/provision-infrastructure-${project_name}
         description: |-
           ## Obtención de las versiones disponibles para ${project_name}
 
           Obtendremos un listado con las **distintas versiones de infraestructura disponibles** para el proyecto ${project_name}
         team: Executor
         variableMapping:
-          pythonScript.packageIds: ${versions_infrastructure_availables}
-      - name: Infrastructure version selection
+          pythonScript.packageIds: ${versions_provisioning_availables}
+      - name: Selection of infrastructure version
         type: xlrelease.UserInputTask
-        description: "330/5000\n## Selection of infrastructure version\nYou need to\
-          \ provide the version of the infrastructure you want to apply. Once selected,\
-          \ there will be:\n\n* Resources created in the region :$ {aws_region} \n\
-          * Instances of type  $ {instance_type} \n* Type environment : $ {environment}\
-          \ \n* For the project  $ {project_name}"
+        description: "## Selection of infrastructure version\nYou need to provide\
+          \ the version of the provisioning rules you want to apply. \n* Resources\
+          \ created in the region :${aws_region} \n* Instances of type  ${instance_type}\
+          \ \n* Type environment : ${environment} \n* For the project  ${project_name}"
         team: Requester
         variables:
-        - version_infrastructure_selected
-      color: '#0099CC'
+        - version_provisioning_selected
+      - name: Provisioning of the infrastructure in AWS
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentPackage: ${version_infrastructure_selected}
+        deploymentEnvironment: Environments/${project_name}/${project_name}.${environment}
+        team: Executor
+      color: '#FFAB00'
     variables:
     - type: xlrelease.StringVariable
       key: aws_region
@@ -71,7 +198,7 @@ spec:
         - eu-west-1
         - eu-west-2
         - eu-west-3
-      value: us-east-1
+      value: eu-west-3
     - type: xlrelease.StringVariable
       key: environment
       requiresValue: false
@@ -84,7 +211,7 @@ spec:
         - dev
         - test
         - prod
-      value: dev
+      value: prod
     - type: xlrelease.StringVariable
       key: instance_type
       requiresValue: false
@@ -126,71 +253,32 @@ spec:
         type: xlrelease.ListOfStringValueProviderConfiguration
         variableMapping:
           values: ${versions_infrastructure_availables}
-    - type: xlrelease.StringVariable
-      key: version_provisioning
+    - type: xlrelease.ListStringVariable
+      key: versions_provisioning_availables
       requiresValue: false
       showOnReleaseStart: false
-      label: Versión de los playbooks de Ansible para provisionar la infraestructura
+      description: versions_provisioning_availables
+    - type: xlrelease.StringVariable
+      key: version_provisioning_selected
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Version of the Ansible playbook for provisioning
       valueProvider:
         type: xlrelease.ListOfStringValueProviderConfiguration
-        values:
-        - 3.0.0
-        - 2.0.0
-        - 1.0.0
-      value: 3.0.0
+        variableMapping:
+          values: ${versions_provisioning_availables}
     - type: xlrelease.StringVariable
       key: ip_front
       requiresValue: false
       showOnReleaseStart: false
-      label: IP de la máquina de front
-      description: IP obtenida de forma dinámica de las instancias EC2 creadas
+      label: Front IP address
+      description: IP provided by the EC2 instance created in AWS
     - type: xlrelease.StringVariable
       key: ip_bdd
       requiresValue: false
       showOnReleaseStart: false
-      label: IP de la máquina de bdd
-      description: IP obtenida de forma dinámica de las instancias EC2 creadas
-    - type: xlrelease.ListStringVariable
-      key: list_tags
-      requiresValue: false
-      showOnReleaseStart: false
-    - type: xlrelease.StringVariable
-      key: tag_ansible_selected
-      requiresValue: false
-      showOnReleaseStart: false
-      label: Versiones de playbooks disponibles
-      valueProvider:
-        type: xlrelease.ListOfStringValueProviderConfiguration
-        variableMapping:
-          values: ${list_tags}
-    - type: xlrelease.StringVariable
-      key: user_tomcat
-      requiresValue: false
-      showOnReleaseStart: false
-      label: Usuario administrador de Tomcat
-      value: admin
-    - type: xlrelease.PasswordStringVariable
-      key: password_tomcat
-      requiresValue: false
-      showOnReleaseStart: false
-      label: Password para el administrador de Tomcat
+      label: Database IP address
+      description: IP provided by the EC2 instance created in AWS
     scriptUsername: admin
-    scriptUserPassword: admin
-    extensions:
-    - name: Dashboard
-      type: xlrelease.Dashboard
-      owner: admin
-      tiles:
-      - name: Release progress
-        type: xlrelease.ReleaseProgressTile
-      - name: Release summary
-        type: xlrelease.ReleaseSummaryTile
-      - name: Resource usage
-        type: xlrelease.ResourceUsageTile
-      - name: Release timeline
-        type: xlrelease.TimelineTile
-      - name: Release health
-        type: xlrelease.ReleaseHealthTile
-      parentTemplate: Applications/Folderee13f324af694ecea353898fec0faee6/Releasea5a1a69797964262a57f729d8e414104
+    scriptUserPassword: !value "xlrelease_Release_Provisioning_a_new_Cloud_Infrastructure_AWS_scriptUserPassword"
     riskProfile: Default risk profile
-

@@ -1,8 +1,11 @@
 apiVersion: xl-release/v1
 kind: Permissions
 spec:
-- directory: Terraform
+- directory: Cloud Infrastructure
   teams:
+  - name: Security Team
+    users:
+    - admin
   - name: Requester
     users:
     - admin

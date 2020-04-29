@@ -1,0 +1,34 @@
+---
+apiVersion: xl-deploy/v1
+kind: Infrastructure
+spec:
+- name: !format "Infrastructure/terraform-cloud/%project_name%.%environment%"
+  type: terraformEnterprise.AwsProvider
+  accessSecret: !value "aws_secret_access_key"
+  accessKey: !value "aws_access_key_id"
+  defaultRegion: !value aws_region
+---
+apiVersion: xl-deploy/v1
+kind: Environments
+spec:
+  - directory: !format Environments/%project_name%
+    children:
+      - name: !format "%project_name%.%environment%"
+        type: udm.Environment
+        members:
+          - !format "Infrastructure/terraform-cloud/%project_name%.%environment%"
+        dictionaries:
+          - !format "Environments/%project_name%/config.%environment%"
+      - name: !format "config.%environment%"
+        type: udm.Dictionary
+        entries:
+          aws_region: !value aws_region
+          env: !value environment
+          instance_type: !value instance_type
+          database_name: petportal_{{env}}_db
+          database_username: petclinic{{env}}
+          TITLE: Welcome {{env}}
+        encryptedEntries:
+          database_password: scott00tiger
+          database_root_password: scottRoot2020CoronaVirus
+

@@ -1,0 +1,5 @@
+project_name=petportal
+environment=test
+aws_region=us-east-2
+instance_type=t2.large
+
