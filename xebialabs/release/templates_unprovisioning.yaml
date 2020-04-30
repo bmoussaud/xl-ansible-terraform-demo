@@ -12,7 +12,7 @@ spec:
       - name: Undeploy APP ${project_name}
         type: xldeploy.Undeploy
         server: XL Deploy
-        deployedApplication: Environments/${project_name}/${project_name}.${environment}/app-/${project_name}
+        deployedApplication: Environments/${project_name}/${project_name}.${environment}/app-${project_name}
         team: Executor
       - name: Undeploy Provisioning ${project_name}
         type: xldeploy.Undeploy
@@ -24,6 +24,24 @@ spec:
         server: XL Deploy
         deployedApplication: Environments/${project_name}/${project_name}.${environment}/cloud-infrastructure-${project_name}
         team: Executor
+    - phase: XLD
+      tasks:
+      - name: Delete Environment
+        type: xld.DeleteInfrastructure
+        server: XL Deploy
+        ci_id: Environments/${project_name}/${project_name}.${environment}
+        team: Executor
+      - name: Delete Dictionary
+        type: xld.DeleteInfrastructure
+        server: XL Deploy
+        ci_id: Environments/${project_name}/config.${environment}
+        team: Executor
+      - name: Delete Terraform Provider
+        type: xld.DeleteInfrastructure
+        server: XL Deploy
+        ci_id: Infrastructure/terraform-cloud/${project_name}.${environment}
+        team: Executor
+      color: '#0079BC'
     variables:
     - type: xlrelease.StringVariable
       key: project_name
