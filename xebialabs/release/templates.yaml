@@ -44,11 +44,11 @@ spec:
           pythonScript.packageIds: ${versions_infrastructure_availables}
       - name: Selection of infrastructure version
         type: xlrelease.UserInputTask
-        description: "330/5000\n## Selection of infrastructure version\nYou need to\
-          \ provide the version of the infrastructure you want to apply. Once selected,\
-          \ there will be:\n\n* Resources created in the region : ${aws_region} \n\
-          * Instances of type  ${instance_type} \n* Type environment : ${environment}\
-          \ \n* For the project  ${project_name}"
+        description: "## Selection of the infrastructure version\nYou need to provide\
+          \ the version of the infrastructure you want to apply. Once selected, there\
+          \ will be:\n\n* Resources created in the region : ${aws_region} \n* Instances\
+          \ of type  ${instance_type} \n* Type environment : ${environment} \n* For\
+          \ the project  ${project_name}"
         team: Requester
         variables:
         - version_infrastructure_selected
@@ -177,7 +177,7 @@ spec:
       - name: Provisioning of the infrastructure in AWS
         type: xldeploy.Deploy
         server: XL Deploy
-        deploymentPackage: ${version_infrastructure_selected}
+        deploymentPackage: ${version_provisioning_selected}
         deploymentEnvironment: Environments/${project_name}/${project_name}.${environment}
         team: Executor
       color: '#FFAB00'
