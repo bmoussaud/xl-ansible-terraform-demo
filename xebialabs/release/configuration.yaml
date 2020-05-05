@@ -9,4 +9,10 @@ spec:
     url: http://localhost:4599
     username: admin
     password: admin
-
+- directory: PetPortal
+  children:
+  - name: XL Deploy
+    type: xldeploy.XLDeployServer
+    url: http://localhost:4599
+    username: admin
+    password: admin
