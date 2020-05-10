@@ -4,7 +4,6 @@ kind: Templates
 spec:
 - directory: Cloud Infrastructure
   children:
-  - directory: ITSM
   - template: Provisioning a new Cloud Infrastructure AWS
     description: '# Template Provisioning a new Cloud Infrastructure  in AWS'
     scheduledStartDate: 2019-08-08T09:00:00+02:00
@@ -342,4 +341,43 @@ spec:
       label: Change Request ID
     scriptUsername: admin
     scriptUserPassword: !value "xlrelease_Release_Provisioning_a_new_Cloud_Infrastructure_AWS_scriptUserPassword"
+    extensions:
+    - name: Dashboard
+      type: xlrelease.Dashboard
+      owner: admin
+      tiles:
+      - name: Release progress
+        type: xlrelease.ReleaseProgressTile
+        col: 2
+      - name: Release summary
+        type: xlrelease.ReleaseSummaryTile
+        col: 1
+      - name: Resource usage
+        type: xlrelease.ResourceUsageTile
+        width: 1
+      - name: Release timeline
+        type: xlrelease.TimelineTile
+        width: 2
+        col: 1
+      - name: ServiceNow records
+        type: servicenow.ServiceNowQueryTile
+        row: 1
+        col: 0
+        servicenowServer: Service Now
+        query: short_descriptionSTARTSWITHNew Infrastructure
+        detailsViewColumns:
+          number: number
+          short_description: short_description
+          state: state
+          priority: priority
+          assigned_to: assigned_to.display_value
+      - name: Infrastructure
+        type: xlrelease.MarkdownTile
+        row: 0
+        col: 0
+        width: 1
+        height: 1
+        content: "## Project Name: ${project_name} \n### ${environment} AWS\n### IP\
+          \ Web APP: ${ip_front}\n### IP Database : ${ip_bdd}"
+      parentTemplate: Applications/Folder94d01698852e489dbf9c4a597d107ebd/Releasea91d4609fa6e4b20b99846bc9d2d2fb8
     riskProfile: Default risk profile
