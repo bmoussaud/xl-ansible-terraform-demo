@@ -4,6 +4,7 @@ kind: Templates
 spec:
 - directory: Cloud Infrastructure
   children:
+  - directory: ITSM
   - template: Provisioning a new Cloud Infrastructure AWS
     description: '# Template Provisioning a new Cloud Infrastructure  in AWS'
     scheduledStartDate: 2019-08-08T09:00:00+02:00
@@ -184,7 +185,6 @@ spec:
     variables:
     - type: xlrelease.StringVariable
       key: aws_region
-      requiresValue: false
       showOnReleaseStart: false
       label: AWS Region
       description: Región de AWS en la que se crearán los recursos y la infraestructura
@@ -201,8 +201,6 @@ spec:
       value: eu-west-3
     - type: xlrelease.StringVariable
       key: environment
-      requiresValue: false
-      showOnReleaseStart: false
       label: Environment
       description: Environment object of the infrastructure request
       valueProvider:
@@ -232,8 +230,6 @@ spec:
       value: t2.micro
     - type: xlrelease.StringVariable
       key: project_name
-      requiresValue: false
-      showOnReleaseStart: false
       label: Project Name
       description: Name of the project to create. An application of the same name
         must exist in XL Deploy under Applications / Infrastructures / Terraform

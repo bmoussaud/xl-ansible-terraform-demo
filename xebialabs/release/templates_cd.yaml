@@ -57,7 +57,7 @@ spec:
         riskProfile: Default risk profile
         template: Cloud Infrastructure/Unprovisioning an AWS Cloud Infrastructure
         folder: PetPortal
-      - name: Check ${project_name} if DEV is down
+      - name: Check if the DEV environment for ${project_name} is down
         type: xlrelease.Task
         team: Requester
       color: '#0079BC'

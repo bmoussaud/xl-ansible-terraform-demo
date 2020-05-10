@@ -4,6 +4,7 @@ kind: Templates
 spec:
 - directory: Cloud Infrastructure
   children:
+  - directory: ITSM
   - template: Unprovisioning an AWS Cloud Infrastructure
     scheduledStartDate: 2020-04-29T09:00:00+02:00
     phases:
