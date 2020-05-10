@@ -9,6 +9,12 @@ spec:
     url: http://localhost:4599
     username: admin
     password: admin
+  - name: Service Now
+    type: servicenow.Server
+    url: https://dev86267.service-now.com
+    username: admin
+    password: wdq7iLPhHG
+    useServicenowApp: false        
 - directory: PetPortal
   children:
   - name: XL Deploy
