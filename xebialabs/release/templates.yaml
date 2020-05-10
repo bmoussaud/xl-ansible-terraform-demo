@@ -43,17 +43,72 @@ spec:
         team: Executor
         variableMapping:
           pythonScript.packageIds: ${versions_infrastructure_availables}
-      - name: Selection of infrastructure version
+      - name: Obtaining the versions available for the provisioning of the ${project_name}
+          project
+        type: xld.GetAllVersions
+        server: XL Deploy
+        applicationId: Applications/provision-infrastructure-${project_name}
+        description: |-
+          ## Obtención de las versiones disponibles para ${project_name}
+
+          Obtendremos un listado con las **distintas versiones de infraestructura disponibles** para el proyecto ${project_name}
+        team: Executor
+        variableMapping:
+          pythonScript.packageIds: ${versions_provisioning_availables}
+      - name: Selection of infrastructure versions (Ansible \/ Terraform)
         type: xlrelease.UserInputTask
-        description: "## Selection of the infrastructure version\nYou need to provide\
-          \ the version of the infrastructure you want to apply. Once selected, there\
-          \ will be:\n\n* Resources created in the region : ${aws_region} \n* Instances\
-          \ of type  ${instance_type} \n* Type environment : ${environment} \n* For\
-          \ the project  ${project_name}"
+        description: "## Selection of infrastructure version\nYou need to provide\
+          \ the version of the provisioning rules you want to apply. \n* Resources\
+          \ created in the region :${aws_region} \n* Instances of type  ${instance_type}\
+          \ \n* Type environment : ${environment} \n* For the project  ${project_name}"
         team: Requester
         variables:
         - version_infrastructure_selected
+        - version_provisioning_selected
       color: '#0099CC'
+    - phase: ITSM
+      tasks:
+      - name: ${change_request_id} Create Change Request
+        type: servicenow.CreateChangeRequest
+        servicenowServer: Service Now
+        shortDescription: New Infrastructure AWS for ${project_name} (${environment}
+          )
+        ^description: "* Resources created in the region :${aws_region} \n* Instances\
+          \ of type  ${instance_type} \n* Type environment : ${environment} \n* For\
+          \ the project  ${project_name}"
+        assignmentGroup: CAB Approval
+        state: NEW
+        priority: 2 - High
+        owner: admin
+        variableMapping:
+          pythonScript.sysId: ${snow_id}
+          pythonScript.data: ${data}
+          pythonScript.Ticket: ${change_request_id}
+      - name: '${change_request_id}: Move automaticaly to Assess'
+        type: servicenow.UpdateChangeRequest
+        servicenowServer: Service Now
+        ciSysId: ${change_request_id}
+        state: Assess
+        shortDescription: ""
+        sysId: ${snow_id}
+        owner: admin
+      - name: '${change_request_id}: Wait for Scheduled'
+        type: servicenow.PollingCheckStatus
+        servicenowServer: Service Now
+        sysId: ${snow_id}
+        checkForStatus: Scheduled
+        owner: admin
+        variableMapping:
+          pythonScript.data: ${data}
+      - name: '${change_request_id}: Move automaticaly to Implement'
+        type: servicenow.UpdateChangeRequest
+        servicenowServer: Service Now
+        ciSysId: ${change_request_id}
+        state: Implement
+        shortDescription: ""
+        sysId: ${snow_id}
+        owner: admin
+      color: '#0079BC'
     - phase: ENVIRONMENT CREATION
       tasks:
       - name: Creation of the configuration item in XLD
@@ -125,6 +180,7 @@ spec:
           \ been created correctly in XLD"
         team: Security Team
         precondition: '"${environment}" == "prod"'
+        locked: true
       color: '#00875A'
     - phase: INFRASTRUCTURE CREATION
       tasks:
@@ -154,33 +210,29 @@ spec:
       color: '#CC4A3C'
     - phase: INFRASTRUCTURE PROVISIONING
       tasks:
-      - name: Obtaining the versions available for the provisioning of the ${project_name}
-          project
-        type: xld.GetAllVersions
-        server: XL Deploy
-        applicationId: Applications/provision-infrastructure-${project_name}
-        description: |-
-          ## Obtención de las versiones disponibles para ${project_name}
-
-          Obtendremos un listado con las **distintas versiones de infraestructura disponibles** para el proyecto ${project_name}
-        team: Executor
-        variableMapping:
-          pythonScript.packageIds: ${versions_provisioning_availables}
-      - name: Selection of infrastructure version
-        type: xlrelease.UserInputTask
-        description: "## Selection of infrastructure version\nYou need to provide\
-          \ the version of the provisioning rules you want to apply. \n* Resources\
-          \ created in the region :${aws_region} \n* Instances of type  ${instance_type}\
-          \ \n* Type environment : ${environment} \n* For the project  ${project_name}"
-        team: Requester
-        variables:
-        - version_provisioning_selected
       - name: Provisioning of the infrastructure in AWS
         type: xldeploy.Deploy
         server: XL Deploy
         deploymentPackage: ${version_provisioning_selected}
         deploymentEnvironment: Environments/${project_name}/${project_name}.${environment}
         team: Executor
+      - name: '${change_request_id}: Move automaticaly to Review'
+        type: servicenow.UpdateChangeRequest
+        servicenowServer: Service Now
+        ciSysId: ${change_request_id}
+        state: Review
+        shortDescription: ""
+        sysId: ${snow_id}
+        owner: admin
+      - name: '${change_request_id}: Close CR'
+        type: servicenow.UpdateChangeRequest
+        servicenowServer: Service Now
+        ciSysId: ${change_request_id}
+        shortDescription: ""
+        sysId: ${snow_id}
+        closeCode: successful
+        closeNotes: DONE WITH digital.ai
+        owner: admin
       color: '#FFAB00'
     variables:
     - type: xlrelease.StringVariable
@@ -244,7 +296,7 @@ spec:
       key: version_infrastructure_selected
       requiresValue: false
       showOnReleaseStart: false
-      label: Selected infrastructure version
+      label: Terraform Version
       valueProvider:
         type: xlrelease.ListOfStringValueProviderConfiguration
         variableMapping:
@@ -258,7 +310,7 @@ spec:
       key: version_provisioning_selected
       requiresValue: false
       showOnReleaseStart: false
-      label: Version of the Ansible playbook for provisioning
+      label: Ansible Version
       valueProvider:
         type: xlrelease.ListOfStringValueProviderConfiguration
         variableMapping:
@@ -275,6 +327,19 @@ spec:
       showOnReleaseStart: false
       label: Database IP address
       description: IP provided by the EC2 instance created in AWS
+    - type: xlrelease.StringVariable
+      key: snow_id
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.MapStringStringVariable
+      key: data
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: change_request_id
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Change Request ID
     scriptUsername: admin
     scriptUserPassword: !value "xlrelease_Release_Provisioning_a_new_Cloud_Infrastructure_AWS_scriptUserPassword"
     riskProfile: Default risk profile

@@ -1,0 +1,106 @@
+---
+apiVersion: xl-release/v1
+kind: Templates
+spec:
+- directory: Cloud Infrastructure
+  children:
+  - directory: ITSM
+  - template: SNOW
+    scheduledStartDate: 2020-05-07T09:00:00+02:00
+    phases:
+    - phase: ITSM
+      tasks:
+      - name: ${change_request_id} Create Change Request
+        type: servicenow.CreateChangeRequest
+        servicenowServer: Service Now
+        shortDescription: New Infrastructure AWS for PetPortal (DEV)
+        ^description: |-
+          AWS info
+          * instance: micro.t2
+          * zone PARIS
+        assignmentGroup: CAB Approval
+        state: NEW
+        priority: 2 - High
+        owner: admin
+        variableMapping:
+          pythonScript.data: ${data}
+          pythonScript.sysId: ${id}
+          pythonScript.Ticket: ${change_request_id}
+      - name: '${change_request_id}: Move automaticaly to Assess'
+        type: servicenow.UpdateChangeRequest
+        servicenowServer: Service Now
+        ciSysId: ${change_request_id}
+        state: Assess
+        shortDescription: ${short_description}
+        sysId: ${id}
+        owner: admin
+      - name: '${change_request_id}: Wait for Scheduled'
+        type: servicenow.PollingCheckStatus
+        servicenowServer: Service Now
+        sysId: ${id}
+        checkForStatus: Scheduled
+        owner: admin
+        variableMapping:
+          pythonScript.data: ${data}
+          pythonScript.ticket: ${n}
+          pythonScript.status: ${new_status}
+      - name: '${change_request_id}: Move automaticaly to Implement'
+        type: servicenow.UpdateChangeRequest
+        servicenowServer: Service Now
+        ciSysId: ${change_request_id}
+        state: Implement
+        shortDescription: ${short_description}
+        sysId: ${id}
+        owner: admin
+      - name: DO THE ACTIONS on INFRA
+        type: xlrelease.Task
+        description: ${data}
+        owner: admin
+      - name: '${change_request_id}: Move automaticaly to Review'
+        type: servicenow.UpdateChangeRequest
+        servicenowServer: Service Now
+        ciSysId: ${change_request_id}
+        state: Review
+        shortDescription: ${short_description}
+        sysId: ${id}
+        owner: admin
+      - name: '${change_request_id}: Close CR'
+        type: servicenow.UpdateChangeRequest
+        servicenowServer: Service Now
+        ciSysId: ${change_request_id}
+        shortDescription: ${short_description}
+        sysId: ${id}
+        closeCode: successful
+        closeNotes: DONE WITH digital.ai
+        owner: admin
+      color: '#0079BC'
+    variables:
+    - type: xlrelease.StringVariable
+      key: id
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.MapStringStringVariable
+      key: data
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: change_request_id
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Change Request ID
+    - type: xlrelease.StringVariable
+      key: new_status
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: "n"
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: short_description
+      requiresValue: false
+      showOnReleaseStart: false
+      label: Short Description
+    scriptUsername: admin
+    scriptUserPassword: !value "xlrelease_Release_SNOW_scriptUserPassword"
+    riskProfile: Default risk profile
