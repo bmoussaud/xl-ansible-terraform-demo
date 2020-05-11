@@ -64,7 +64,16 @@ spec:
         variables:
         - version_infrastructure_selected
         - version_provisioning_selected
-      color: '#0099CC'
+      - name: Compute Variables
+        type: xlrelease.ScriptTask
+        owner: admin
+        script: |-
+          releaseVariables['cloud_infra_application']=releaseVariables['version_infrastructure_selected'].split('/')[-2]
+          releaseVariables['cloud_infra_version']=releaseVariables['version_infrastructure_selected'].split('/')[-1]
+          releaseVariables['provisioning_application']=releaseVariables['version_provisioning_selected'].split('/')[-2]
+          releaseVariables['provisioning_version']=releaseVariables['version_provisioning_selected'].split('/')[-1]
+          releaseVariables['environment_name']="{project_name}.{environment}".format(**releaseVariables)
+      color: '#65747C'
     - phase: ITSM
       tasks:
       - name: ${change_request_id} Create Change Request
@@ -78,11 +87,13 @@ spec:
         assignmentGroup: CAB Approval
         state: NEW
         priority: 2 - High
-        owner: admin
+        team: ITSM Team
         variableMapping:
           pythonScript.sysId: ${snow_id}
           pythonScript.data: ${data}
           pythonScript.Ticket: ${change_request_id}
+        tags:
+        - itsm
       - name: '${change_request_id}: Move automaticaly to Assess'
         type: servicenow.UpdateChangeRequest
         servicenowServer: Service Now
@@ -90,15 +101,19 @@ spec:
         state: Assess
         shortDescription: ""
         sysId: ${snow_id}
-        owner: admin
+        team: ITSM Team
+        tags:
+        - itsm
       - name: '${change_request_id}: Wait for Scheduled'
         type: servicenow.PollingCheckStatus
         servicenowServer: Service Now
         sysId: ${snow_id}
         checkForStatus: Scheduled
-        owner: admin
+        team: ITSM Team
         variableMapping:
           pythonScript.data: ${data}
+        tags:
+        - itsm
       - name: '${change_request_id}: Move automaticaly to Implement'
         type: servicenow.UpdateChangeRequest
         servicenowServer: Service Now
@@ -106,7 +121,9 @@ spec:
         state: Implement
         shortDescription: ""
         sysId: ${snow_id}
-        owner: admin
+        team: ITSM Team
+        tags:
+        - itsm
       color: '#0079BC'
     - phase: ENVIRONMENT CREATION
       tasks:
@@ -186,8 +203,15 @@ spec:
       - name: Creation of the infrastructure in AWS
         type: xldeploy.Deploy
         server: XL Deploy
+        displayStepLogs: false
         deploymentPackage: ${version_infrastructure_selected}
         deploymentEnvironment: Environments/${project_name}/${project_name}.${environment}
+        facets:
+        - type: udm.DeploymentTaskFacet
+          variableMapping:
+            version: ${cloud_infra_version}
+            environmentId: ${environment_name}
+            applicationId: ${cloud_infra_application}
         team: Executor
       - name: Lookup of the IP addresses
         type: xlrelease.ParallelGroup
@@ -214,6 +238,12 @@ spec:
         server: XL Deploy
         deploymentPackage: ${version_provisioning_selected}
         deploymentEnvironment: Environments/${project_name}/${project_name}.${environment}
+        facets:
+        - type: udm.DeploymentTaskFacet
+          variableMapping:
+            environmentId: ${environment_name}
+            applicationId: ${provisioning_application}
+            version: ${provisioning_version}
         team: Executor
       - name: '${change_request_id}: Move automaticaly to Review'
         type: servicenow.UpdateChangeRequest
@@ -222,16 +252,21 @@ spec:
         state: Review
         shortDescription: ""
         sysId: ${snow_id}
-        owner: admin
+        team: ITSM Team
+        tags:
+        - itsm
       - name: '${change_request_id}: Close CR'
         type: servicenow.UpdateChangeRequest
         servicenowServer: Service Now
         ciSysId: ${change_request_id}
+        state: Closed
         shortDescription: ""
         sysId: ${snow_id}
         closeCode: successful
         closeNotes: DONE WITH digital.ai
-        owner: admin
+        team: ITSM Team
+        tags:
+        - itsm
       color: '#FFAB00'
     variables:
     - type: xlrelease.StringVariable
@@ -339,6 +374,26 @@ spec:
       requiresValue: false
       showOnReleaseStart: false
       label: Change Request ID
+    - type: xlrelease.StringVariable
+      key: cloud_infra_application
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: cloud_infra_version
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: provisioning_application
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: provisioning_version
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: environment_name
+      requiresValue: false
+      showOnReleaseStart: false
     scriptUsername: admin
     scriptUserPassword: !value "xlrelease_Release_Provisioning_a_new_Cloud_Infrastructure_AWS_scriptUserPassword"
     extensions:
@@ -355,10 +410,7 @@ spec:
       - name: Resource usage
         type: xlrelease.ResourceUsageTile
         width: 1
-      - name: Release timeline
-        type: xlrelease.TimelineTile
-        width: 2
-        col: 1
+        row: 3
       - name: ServiceNow records
         type: servicenow.ServiceNowQueryTile
         row: 1
@@ -379,5 +431,25 @@ spec:
         height: 1
         content: "## Project Name: ${project_name} \n### ${environment} AWS\n### IP\
           \ Web APP: ${ip_front}\n### IP Database : ${ip_bdd}"
+      - name: XL Deploy deployments
+        type: xlrelease.XLDeployTile
+        row: 1
+        col: 1
+      - name: Current applications
+        type: deployment.CurrentApplicationsTile
+        row: 2
+        col: 0
+      - name: Deployment activity
+        type: deployment.DeploymentsActivityTile
+        row: 2
+        col: 1
+      - name: Deployments distribution
+        type: deployment.DeploymentsDistributionTile
+        row: 2
+        col: 2
+      - name: Deployment success rate
+        type: deployment.DeploymentsSuccessRateTile
+        row: 1
+        col: 2
       parentTemplate: Applications/Folder94d01698852e489dbf9c4a597d107ebd/Releasea91d4609fa6e4b20b99846bc9d2d2fb8
     riskProfile: Default risk profile

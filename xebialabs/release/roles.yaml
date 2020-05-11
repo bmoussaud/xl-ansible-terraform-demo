@@ -3,6 +3,9 @@ kind: Permissions
 spec:
 - directory: Cloud Infrastructure
   teams:
+  - name: ITSM Team
+    users:
+    - admin
   - name: Security Team
     users:
     - admin
