@@ -206,6 +206,7 @@ spec:
         displayStepLogs: false
         deploymentPackage: ${version_infrastructure_selected}
         deploymentEnvironment: Environments/${project_name}/${project_name}.${environment}
+        rollbackOnFailure: false
         facets:
         - type: udm.DeploymentTaskFacet
           variableMapping:
@@ -230,6 +231,18 @@ spec:
           ciPropertyName: address
           variableMapping:
             pythonScript.ciPropertyValue: ${ip_bdd}
+      - name: Check Connection to Front
+        type: xldeploy.Controltask
+        server: XL Deploy
+        ciId: Infrastructure/${project_name}-${environment}-front
+        taskName: checkConnection
+        team: Executor
+      - name: Check Connection to BDD
+        type: xldeploy.Controltask
+        server: XL Deploy
+        ciId: Infrastructure/${project_name}-${environment}-bdd
+        taskName: checkConnection
+        team: Executor
       color: '#CC4A3C'
     - phase: INFRASTRUCTURE PROVISIONING
       tasks:
@@ -238,6 +251,7 @@ spec:
         server: XL Deploy
         deploymentPackage: ${version_provisioning_selected}
         deploymentEnvironment: Environments/${project_name}/${project_name}.${environment}
+        rollbackOnFailure: false
         facets:
         - type: udm.DeploymentTaskFacet
           variableMapping:
@@ -268,6 +282,8 @@ spec:
         tags:
         - itsm
       color: '#FFAB00'
+    tags:
+    - cloud
     variables:
     - type: xlrelease.StringVariable
       key: aws_region
@@ -423,14 +439,16 @@ spec:
           state: state
           priority: priority
           assigned_to: assigned_to.display_value
-      - name: Infrastructure
+      - name: Project Information
         type: xlrelease.MarkdownTile
         row: 0
         col: 0
         width: 1
         height: 1
-        content: "## Project Name: ${project_name} \n### ${environment} AWS\n### IP\
-          \ Web APP: ${ip_front}\n### IP Database : ${ip_bdd}"
+        content: |-
+          ### ${project_name}.${environment}
+          ### IP Web APP: ${ip_front}
+          ### IP Database : ${ip_bdd}
       - name: XL Deploy deployments
         type: xlrelease.XLDeployTile
         row: 1

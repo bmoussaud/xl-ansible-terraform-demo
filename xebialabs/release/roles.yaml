@@ -56,6 +56,9 @@ spec:
     - template#edit_failure_handler
 - directory: PetPortal
   teams:
+  - name: ITSM Team
+    users:
+    - admin
   - name: Security Team
     users:
     - admin

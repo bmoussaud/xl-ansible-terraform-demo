@@ -7,11 +7,11 @@ spec:
   - template: Continuous Delivery
     scheduledStartDate: 2020-04-30T09:00:00+02:00
     phases:
-    - phase: DEV
+    - phase: PREPARE INFRASTRUCTURE
       tasks:
       - name: Provision a new Dev Environment
         type: xlrelease.CreateReleaseTask
-        newReleaseTitle: New AWS DEV Environment
+        newReleaseTitle: '[DEV] New AWS  Environment'
         templateVariables:
         - type: xlrelease.StringVariable
           key: environment
@@ -28,8 +28,50 @@ spec:
         riskProfile: Default risk profile
         template: Cloud Infrastructure/Provisioning a new Cloud Infrastructure AWS
         folder: PetPortal
+      - name: Provision a new Test Environment
+        type: xlrelease.CreateReleaseTask
+        newReleaseTitle: '[TEST] New AWS Environment'
+        templateVariables:
+        - type: xlrelease.StringVariable
+          key: environment
+          label: Environment
+          description: Environment object of the infrastructure request
+          value: test
+        - type: xlrelease.StringVariable
+          key: project_name
+          label: Project Name
+          description: Name of the project to create. An application of the same name
+            must exist in XL Deploy under Applications / Infrastructures / Terraform
+          value: ${project_name}
+        createdReleaseId: ${env.test}
+        riskProfile: Default risk profile
+        template: Cloud Infrastructure/Provisioning a new Cloud Infrastructure AWS
+        folder: PetPortal
+      - name: Provision a new Prod Environment
+        type: xlrelease.CreateReleaseTask
+        newReleaseTitle: '[PROD] New AWS Environment'
+        templateVariables:
+        - type: xlrelease.StringVariable
+          key: environment
+          label: Environment
+          description: Environment object of the infrastructure request
+          value: prod
+        - type: xlrelease.StringVariable
+          key: project_name
+          label: Project Name
+          description: Name of the project to create. An application of the same name
+            must exist in XL Deploy under Applications / Infrastructures / Terraform
+          value: ${project_name}
+        createdReleaseId: ${env.prod}
+        riskProfile: Default risk profile
+        template: Cloud Infrastructure/Provisioning a new Cloud Infrastructure AWS
+        folder: PetPortal
+      color: '#65747C'
+    - phase: DEV
+      tasks:
       - name: Wait for the Dev Environment availabilty
         type: xlrelease.GateTask
+        team: Requester
         dependencies:
         - type: xlrelease.Dependency
           targetId: ${env.dev}
@@ -38,10 +80,12 @@ spec:
         server: XL Deploy
         deploymentPackage: Applications/app-petportal/2.0.88
         deploymentEnvironment: Environments/${project_name}/${project_name}.dev
+        facets:
+        - type: udm.DeploymentTaskFacet
+          version: 2.0.88
+          application: app-petportal
+          environment: petportal.dev
         team: Executor
-      - name: Test ${project_name} in DEV
-        type: xlrelease.Task
-        team: Requester
       - name: Unprovision the DEV env
         type: xlrelease.CreateReleaseTask
         team: Executor
@@ -61,6 +105,93 @@ spec:
         type: xlrelease.Task
         team: Requester
       color: '#0079BC'
+    - phase: TEST
+      tasks:
+      - name: Wait for the Test Environment availabilty
+        type: xlrelease.GateTask
+        team: Requester
+        dependencies:
+        - type: xlrelease.Dependency
+          targetId: ${env.test}
+      - name: Deploy the ${project_name} application
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentApplication: Applications/app-petportal
+        deploymentVersion: 2.0.88
+        deploymentPackage: Applications/app-petportal/2.0.88
+        deploymentEnvironment: Environments/${project_name}/${project_name}.test
+        facets:
+        - type: udm.DeploymentTaskFacet
+          version: 2.0.88
+          application: app-petportal
+          environment: petportal.test
+        team: Executor
+      - name: Test ${project_name}
+        type: xlrelease.Task
+        team: Requester
+      - name: Unprovision the TEST env
+        type: xlrelease.CreateReleaseTask
+        team: Executor
+        newReleaseTitle: Destroy Dev Env
+        templateVariables:
+        - type: xlrelease.StringVariable
+          key: project_name
+          label: Project Name
+          value: ${project_name}
+        - type: xlrelease.StringVariable
+          key: environment
+          value: dev
+        riskProfile: Default risk profile
+        template: Cloud Infrastructure/Unprovisioning an AWS Cloud Infrastructure
+        folder: PetPortal
+      - name: Check if the TEST environment for ${project_name} is down
+        type: xlrelease.Task
+        team: Requester
+      color: '#FFAB00'
+    - phase: PROD
+      tasks:
+      - name: Wait for the PROD Environment availabilty
+        type: xlrelease.GateTask
+        team: Requester
+        conditions:
+        - name: Business is Ready to go to production
+          type: xlrelease.GateCondition
+        dependencies:
+        - type: xlrelease.Dependency
+          targetId: ${env.prod}
+      - name: Deploy the ${project_name} application (copy)
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentApplication: Applications/app-petportal
+        deploymentVersion: 2.0.88
+        deploymentPackage: Applications/app-petportal/2.0.88
+        deploymentEnvironment: Environments/${project_name}/${project_name}.prod
+        facets:
+        - type: udm.DeploymentTaskFacet
+          version: 2.0.88
+          application: app-petportal
+          environment: petportal.test
+        team: Executor
+      - name: Validate the new feature in production
+        type: xlrelease.Task
+      - name: Unprovision the previous Prod env
+        type: xlrelease.CreateReleaseTask
+        team: Executor
+        newReleaseTitle: Destroy Dev Env
+        templateVariables:
+        - type: xlrelease.StringVariable
+          key: project_name
+          label: Project Name
+          value: ${project_name}
+        - type: xlrelease.StringVariable
+          key: environment
+          value: dev
+        riskProfile: Default risk profile
+        template: Cloud Infrastructure/Unprovisioning an AWS Cloud Infrastructure
+        folder: PetPortal
+      color: '#0079BC'
+    tags:
+    - cloud
     variables:
     - type: xlrelease.StringVariable
       key: env.dev
@@ -70,6 +201,35 @@ spec:
       key: project_name
       requiresValue: false
       value: petportal
+    - type: xlrelease.StringVariable
+      key: env.test
+      requiresValue: false
+      showOnReleaseStart: false
+    - type: xlrelease.StringVariable
+      key: env.prod
+      requiresValue: false
+      showOnReleaseStart: false
     scriptUsername: admin
     scriptUserPassword: !value "xlrelease_Release_Continuous_Delivery_scriptUserPassword"
+    extensions:
+    - name: Dashboard
+      type: xlrelease.Dashboard
+      owner: admin
+      tiles:
+      - name: Release progress
+        type: xlrelease.ReleaseProgressTile
+      - name: Release summary
+        type: xlrelease.ReleaseSummaryTile
+      - name: Release timeline
+        type: xlrelease.TimelineTile
+        width: 2
+      - name: XL Deploy deployments
+        type: xlrelease.XLDeployTile
+        row: 1
+        col: 2
+      - name: Current applications
+        type: deployment.CurrentApplicationsTile
+        row: 0
+        col: 2
+      parentTemplate: Applications/Folderfca8149af774488fb79ebe2c6a206a06/Releasec99aa58130b541c39529e2f965940429
     riskProfile: Default risk profile
