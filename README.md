@@ -9,7 +9,7 @@
 
 * xl-deploy-9.6-server with the following plugings
   * [xld-terraform-enterprise-plugin](https://github.com/xebialabs-community/xld-terraform-enterprise-plugin)
-  * [xld-ansible-step-plugin](https://github.com/xebialabs-community/xlr-ansible-tower-plugin)
+  * [xld-ansible-step-plugin](https://github.com/xebialabs-community/xld-ansible-step-plugin)
 
 * xl-release-9.6-server with the following plugings:
   * xlr-servicenow-plugin
