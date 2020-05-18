@@ -8,14 +8,14 @@
 * Restart the XL Deploy server.
 
 * xl-deploy-9.6-server with the following plugings
-** xld-terraform-enterprise-plugin
-** xld-ansible-step-plugin
+  * xld-terraform-enterprise-plugin
+  * xld-ansible-step-plugin
 
-* xl-release-9.6-server with the following plugings
-** xld-servicenow-plugin
-** [overtherepy jar file](https://github.com/xebialabs-community/overthere-pylib/releases/download/v0.0.4/overtherepy-0.0.4.jar) into the `XL_RELEASAE_SERVER/plugins/__local__` directory.
-* xlr-devops-as-code-plugin from [releases page](https://github.com/xebialabs-community/xlr-devops-as-code-plugin/releases) into the `XL_RELEASE_SERVER/plugins/__local__` directory.
-* cp servicenow directory to ${XL_RELEASE_HOME}/ext
+* xl-release-9.6-server with the following plugings:
+  * xld-servicenow-plugin
+  * [overtherepy jar file](https://github.com/xebialabs-community/overthere-pylib/releases/download/v0.0.4/overtherepy-0.0.4.jar) into the `XL_RELEASAE_SERVER/plugins/__local__` directory.
+  * xlr-devops-as-code-plugin from [releases page](https://github.com/xebialabs-community/xlr-devops-as-code-plugin/releases) into the `XL_RELEASE_SERVER/plugins/__local__` directory.
+  * cp servicenow directory to ${XL_RELEASE_HOME}/ext
 
 ## XLDeploy Configuration
 
