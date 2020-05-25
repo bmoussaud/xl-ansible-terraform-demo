@@ -15,7 +15,7 @@ spec:
 apiVersion: xl-deploy/v1
 kind: Infrastructure
 spec:
-- name: {{container.id}}/calculator-tomcat
+- name: {{container.id}}/tomcat-server
   type: tomcat.Server
   home: /opt/apache-tomcat-8.5.8
   startCommand: sudo systemctl start tomcat
@@ -24,6 +24,10 @@ spec:
   startWaitTime: 1
   stopWaitTime: 1
   children:
-  - name: calculator-tomcat.vh
+  - name: tomcat.vh
     type: tomcat.VirtualHost
+- name: {{container.id}}/smoke tester
+  type: smoketest.Runner
+
+
 

@@ -45,7 +45,7 @@ spec:
         instanceName: !format 'petportal-{{env}}-bdd'
         os: UNIX
         connectionType: SCP
-        address: '{{%outputVariables.public_ip_bdd%}}'
+        address: '{{%outputVariables.java-bdd-project-public_ip_bdd%}}'
         username: ubuntu
         tags:
           - backend
@@ -55,7 +55,7 @@ spec:
         instanceName: !format 'petportal-{{env}}-front'
         os: UNIX
         connectionType: SCP
-        address: '{{%outputVariables.public_ip_front%}}'
+        address: '{{%outputVariables.java-bdd-project-public_ip_front%}}'
         username: ubuntu
         tags:
           - frontend

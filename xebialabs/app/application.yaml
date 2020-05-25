@@ -13,7 +13,7 @@ spec:
     deployables:
     - name: smoke Test
       type: smoketest.HttpRequestTest
-      url: 'http://{{public_ip_front}}:8080/petclinic/index.jsp'
+      url: 'http://{{java-bdd-project-public_ip_front}}:8080/petclinic/index.jsp'
       expectedResponseText: '{{TITLE}}'
     - name: sql
       type: sql.SqlScripts
@@ -25,7 +25,7 @@ spec:
       username: '{{database_username}}'
       password: '{{database_password}}'
       driverClassName: com.mysql.jdbc.Driver
-      url: 'jdbc:mysql://{{public_ip_bdd}}/{{database_name}}'
+      url: 'jdbc:mysql://{{java-bdd-project-public_ip_front}}/{{database_name}}'
     - name: petclinic
       type: jee.War
       scanPlaceholders: True

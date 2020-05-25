@@ -11,7 +11,7 @@ spec:
     orchestrator:
       - parallel-by-container
     deployables:
-      - name: tomcat
+      - name: web-roles
         type: ansible.RolesSpec
         includeDevOpsAsCodeTask: True
         scanPlaceholders: False
@@ -22,7 +22,7 @@ spec:
           - tomcat8
         variables:
           public_key_path: /Users/bmoussaud/.ssh/demo_keypairs/id_rsa.pub
-      - name: bdd
+      - name: db-roles
         type: ansible.RolesSpec
         scanPlaceholders: True
         includeDevOpsAsCodeTask: True
@@ -41,7 +41,7 @@ spec:
     orchestrator:
      - parallel-by-container
     deployables:
-    - name: tomcat
+    - name: web-roles
       type: ansible.RolesSpec
       includeDevOpsAsCodeTask: True
       scanPlaceholders: False
@@ -52,7 +52,7 @@ spec:
         - tomcat8
       variables:
         public_key_path: /Users/bmoussaud/.ssh/demo_keypairs/id_rsa.pub
-    - name: bdd
+    - name: db-roles
       type: ansible.RolesSpec
       scanPlaceholders: True
       includeDevOpsAsCodeTask: True
